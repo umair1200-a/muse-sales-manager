@@ -1,0 +1,300 @@
+{
+  "entities": {
+    "WorkspaceProfile": {
+      "title": "WorkspaceProfile",
+      "description": "Email-keyed isolated workspace root document identified by a deterministic SHA-256 workspace ID.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 43,
+          "maxLength": 43,
+          "pattern": "^ws_[0-9a-f]{40}$",
+          "description": "Deterministic SHA-256 workspace identifier derived from the normalized user email."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "integer"
+        },
+        "updatedAt": {
+          "type": "integer"
+        }
+      },
+      "required": ["id", "email", "createdAt", "updatedAt"]
+    },
+    "Client": {
+      "title": "Client",
+      "description": "Unique client profile scoped to an email workspace.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 200
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "createdAt": {
+          "type": "integer"
+        },
+        "updatedAt": {
+          "type": "integer"
+        }
+      },
+      "required": ["id", "name", "email", "notes", "createdAt", "updatedAt"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Muse AI account sale and timestamp-backed warranty record scoped to an email workspace.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "saleCode": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 40,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "clientId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "clientName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "clientEmail": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 200
+        },
+        "accountType": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 40
+        },
+        "accountVolumeBillions": {
+          "type": "integer"
+        },
+        "saleDate": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 10
+        },
+        "saleTime": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 8
+        },
+        "saleTimestamp": {
+          "type": "integer"
+        },
+        "warrantyDurationDays": {
+          "type": "integer"
+        },
+        "warrantyStartTs": {
+          "type": "integer"
+        },
+        "warrantyExpiryTs": {
+          "type": "integer"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "replacementCount": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "integer"
+        },
+        "updatedAt": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "saleCode",
+        "clientId",
+        "clientName",
+        "clientEmail",
+        "accountType",
+        "accountVolumeBillions",
+        "saleDate",
+        "saleTime",
+        "saleTimestamp",
+        "warrantyDurationDays",
+        "warrantyStartTs",
+        "warrantyExpiryTs",
+        "notes",
+        "replacementCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Replacement": {
+      "title": "Replacement",
+      "description": "Account replacement record linked to an original sale and client within the same email workspace.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "replacementCode": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 40,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "originalSaleId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "clientId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "originalAccountType": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 40
+        },
+        "newAccountType": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 40
+        },
+        "replacementTimestamp": {
+          "type": "integer"
+        },
+        "warrantyPolicy": {
+          "type": "string",
+          "enum": ["CONTINUE_ORIGINAL", "START_NEW"]
+        },
+        "warrantyDurationDays": {
+          "type": "integer"
+        },
+        "warrantyStartTs": {
+          "type": "integer"
+        },
+        "warrantyExpiryTs": {
+          "type": "integer"
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "createdAt": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "replacementCode",
+        "originalSaleId",
+        "clientId",
+        "originalAccountType",
+        "newAccountType",
+        "replacementTimestamp",
+        "warrantyPolicy",
+        "warrantyDurationDays",
+        "warrantyStartTs",
+        "warrantyExpiryTs",
+        "notes",
+        "createdAt"
+      ]
+    },
+    "AppSettings": {
+      "title": "AppSettings",
+      "description": "Per-workspace warranty and UI preferences.",
+      "type": "object",
+      "properties": {
+        "expiringSoonThresholdHours": {
+          "type": "integer"
+        },
+        "defaultWarrantyDurationDays": {
+          "type": "integer"
+        },
+        "defaultWarrantyStartMode": {
+          "type": "string",
+          "enum": ["SALE_TIME", "CUSTOM"]
+        },
+        "tableDensity": {
+          "type": "string",
+          "enum": ["COMFORTABLE", "COMPACT"]
+        },
+        "rememberSessionDays": {
+          "type": "integer"
+        },
+        "updatedAt": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "expiringSoonThresholdHours",
+        "defaultWarrantyDurationDays",
+        "defaultWarrantyStartMode",
+        "tableDensity",
+        "rememberSessionDays",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/workspaces/{workspaceId}": {
+      "schema": { "$ref": "#/entities/WorkspaceProfile" },
+      "description": "Isolated email-keyed workspace profile document (non-listable)."
+    },
+    "/workspaces/{workspaceId}/clients/{clientId}": {
+      "schema": { "$ref": "#/entities/Client" },
+      "description": "Client profiles isolated to a specific email workspace."
+    },
+    "/workspaces/{workspaceId}/sales/{saleId}": {
+      "schema": { "$ref": "#/entities/Sale" },
+      "description": "Account sales and timestamp-backed warranties isolated to a specific email workspace."
+    },
+    "/workspaces/{workspaceId}/replacements/{replacementId}": {
+      "schema": { "$ref": "#/entities/Replacement" },
+      "description": "Replacement records isolated to a specific email workspace."
+    },
+    "/workspaces/{workspaceId}/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/AppSettings" },
+      "description": "Workspace-specific warranty and display settings (document ID: global)."
+    }
+  }
+}

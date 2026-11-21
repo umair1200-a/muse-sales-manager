@@ -1,0 +1,8 @@
+{
+  "name": "Remix MUSE SALES MANAGER",
+  "description": "Private Muse AI Account Sales, Client Records, Warranty Countdown \u0026 Replacement Control System.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,221 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net (blocks all legacy/unmatched paths)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidWorkspaceId(workspaceId) {
+      return workspaceId is string
+        && workspaceId.size() == 43
+        && workspaceId.matches('^ws_[0-9a-f]{40}$');
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function workspaceExists(workspaceId) {
+      return exists(/databases/$(database)/documents/workspaces/$(workspaceId));
+    }
+
+    function isValidWorkspaceDoc(data) {
+      return data.keys().hasAll(['id', 'email', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'email', 'createdAt', 'updatedAt'])
+        && isValidWorkspaceId(data.id)
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
+        && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && data.createdAt is int && data.createdAt >= 0
+        && data.updatedAt is int && data.updatedAt >= 0;
+    }
+
+    function isValidClient(data) {
+      return data.keys().hasAll(['id', 'name', 'email', 'notes', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['id', 'name', 'email', 'notes', 'createdAt', 'updatedAt'])
+        && isValidId(data.id)
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 160
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
+        && data.notes is string && data.notes.size() <= 2000
+        && data.createdAt is int && data.createdAt >= 0
+        && data.updatedAt is int && data.updatedAt >= 0;
+    }
+
+    function isValidSale(data) {
+      return data.keys().hasAll([
+        'id', 'saleCode', 'clientId', 'clientName', 'clientEmail',
+        'accountType', 'accountVolumeBillions', 'saleDate', 'saleTime',
+        'saleTimestamp', 'warrantyDurationDays', 'warrantyStartTs',
+        'warrantyExpiryTs', 'notes', 'replacementCount', 'createdAt', 'updatedAt'
+      ])
+        && data.keys().hasOnly([
+          'id', 'saleCode', 'clientId', 'clientName', 'clientEmail',
+          'accountType', 'accountVolumeBillions', 'saleDate', 'saleTime',
+          'saleTimestamp', 'warrantyDurationDays', 'warrantyStartTs',
+          'warrantyExpiryTs', 'notes', 'replacementCount', 'createdAt', 'updatedAt'
+        ])
+        && isValidId(data.id)
+        && isValidId(data.saleCode)
+        && isValidId(data.clientId)
+        && data.clientName is string && data.clientName.size() >= 1 && data.clientName.size() <= 160
+        && data.clientEmail is string && data.clientEmail.size() >= 3 && data.clientEmail.size() <= 200
+        && data.accountType is string && data.accountType.size() >= 5 && data.accountType.size() <= 40
+        && data.accountVolumeBillions is int && data.accountVolumeBillions >= 1 && data.accountVolumeBillions <= 31
+        && data.saleDate is string && data.saleDate.size() == 10
+        && data.saleTime is string && data.saleTime.size() >= 5 && data.saleTime.size() <= 8
+        && data.saleTimestamp is int && data.saleTimestamp >= 0
+        && data.warrantyDurationDays is int && data.warrantyDurationDays >= 1 && data.warrantyDurationDays <= 25
+        && data.warrantyStartTs is int && data.warrantyStartTs >= 0
+        && data.warrantyExpiryTs is int && data.warrantyExpiryTs >= data.warrantyStartTs
+        && data.notes is string && data.notes.size() <= 2000
+        && data.replacementCount is int && data.replacementCount >= 0
+        && data.createdAt is int && data.createdAt >= 0
+        && data.updatedAt is int && data.updatedAt >= 0;
+    }
+
+    function isValidReplacement(data) {
+      return data.keys().hasAll([
+        'id', 'replacementCode', 'originalSaleId', 'clientId',
+        'originalAccountType', 'newAccountType', 'replacementTimestamp',
+        'warrantyPolicy', 'warrantyDurationDays', 'warrantyStartTs',
+        'warrantyExpiryTs', 'notes', 'createdAt'
+      ])
+        && data.keys().hasOnly([
+          'id', 'replacementCode', 'originalSaleId', 'clientId',
+          'originalAccountType', 'newAccountType', 'replacementTimestamp',
+          'warrantyPolicy', 'warrantyDurationDays', 'warrantyStartTs',
+          'warrantyExpiryTs', 'notes', 'createdAt'
+        ])
+        && isValidId(data.id)
+        && isValidId(data.replacementCode)
+        && isValidId(data.originalSaleId)
+        && isValidId(data.clientId)
+        && data.originalAccountType is string && data.originalAccountType.size() >= 5 && data.originalAccountType.size() <= 40
+        && data.newAccountType is string && data.newAccountType.size() >= 5 && data.newAccountType.size() <= 40
+        && data.replacementTimestamp is int && data.replacementTimestamp >= 0
+        && (data.warrantyPolicy == 'CONTINUE_ORIGINAL' || data.warrantyPolicy == 'START_NEW')
+        && data.warrantyDurationDays is int && data.warrantyDurationDays >= 1 && data.warrantyDurationDays <= 25
+        && data.warrantyStartTs is int && data.warrantyStartTs >= 0
+        && data.warrantyExpiryTs is int && data.warrantyExpiryTs >= data.warrantyStartTs
+        && data.notes is string && data.notes.size() <= 2000
+        && data.createdAt is int && data.createdAt >= 0;
+    }
+
+    function isValidSettings(data) {
+      return data.keys().hasAll([
+        'expiringSoonThresholdHours', 'defaultWarrantyDurationDays',
+        'defaultWarrantyStartMode', 'tableDensity', 'rememberSessionDays', 'updatedAt'
+      ])
+        && data.keys().hasOnly([
+          'expiringSoonThresholdHours', 'defaultWarrantyDurationDays',
+          'defaultWarrantyStartMode', 'tableDensity', 'rememberSessionDays', 'updatedAt'
+        ])
+        && data.expiringSoonThresholdHours is int && data.expiringSoonThresholdHours >= 1 && data.expiringSoonThresholdHours <= 360
+        && data.defaultWarrantyDurationDays is int && data.defaultWarrantyDurationDays >= 1 && data.defaultWarrantyDurationDays <= 25
+        && (data.defaultWarrantyStartMode == 'SALE_TIME' || data.defaultWarrantyStartMode == 'CUSTOM')
+        && (data.tableDensity == 'COMFORTABLE' || data.tableDensity == 'COMPACT')
+        && data.rememberSessionDays is int && data.rememberSessionDays >= 1 && data.rememberSessionDays <= 90
+        && data.updatedAt is int && data.updatedAt >= 0;
+    }
+
+    // Per-email isolated workspaces (listing is strictly forbidden)
+    match /workspaces/{workspaceId} {
+      allow get: if isValidWorkspaceId(workspaceId);
+      allow list: if false;
+      allow create: if isValidWorkspaceId(workspaceId)
+        && isValidWorkspaceDoc(incoming())
+        && incoming().id == workspaceId;
+      allow update: if isValidWorkspaceId(workspaceId)
+        && isValidWorkspaceDoc(incoming())
+        && incoming().id == existing().id
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['updatedAt']);
+      allow delete: if false;
+
+      match /clients/{clientId} {
+        allow get: if isValidWorkspaceId(workspaceId) && workspaceExists(workspaceId) && isValidId(clientId);
+        allow list: if isValidWorkspaceId(workspaceId) && workspaceExists(workspaceId);
+        allow create: if isValidWorkspaceId(workspaceId)
+          && workspaceExists(workspaceId)
+          && isValidId(clientId)
+          && isValidClient(incoming())
+          && incoming().id == clientId;
+        allow update: if isValidWorkspaceId(workspaceId)
+          && workspaceExists(workspaceId)
+          && isValidId(clientId)
+          && isValidClient(incoming())
+          && incoming().id == existing().id
+          && incoming().createdAt == existing().createdAt
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'email', 'notes', 'updatedAt']);
+        allow delete: if isValidWorkspaceId(workspaceId) && workspaceExists(workspaceId) && isValidId(clientId);
+      }
+
+      match /sales/{saleId} {
+        allow get: if isValidWorkspaceId(workspaceId) && workspaceExists(workspaceId) && isValidId(saleId);
+        allow list: if isValidWorkspaceId(workspaceId) && workspaceExists(workspaceId);
+        allow create: if isValidWorkspaceId(workspaceId)
+          && workspaceExists(workspaceId)
+          && isValidId(saleId)
+          && isValidSale(incoming())
+          && incoming().id == saleId
+          && exists(/databases/$(database)/documents/workspaces/$(workspaceId)/clients/$(incoming().clientId));
+        allow update: if isValidWorkspaceId(workspaceId)
+          && workspaceExists(workspaceId)
+          && isValidId(saleId)
+          && isValidSale(incoming())
+          && incoming().id == existing().id
+          && incoming().saleCode == existing().saleCode
+          && incoming().createdAt == existing().createdAt
+          && exists(/databases/$(database)/documents/workspaces/$(workspaceId)/clients/$(incoming().clientId))
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'clientId', 'clientName', 'clientEmail', 'accountType', 'accountVolumeBillions',
+            'saleDate', 'saleTime', 'saleTimestamp', 'warrantyDurationDays',
+            'warrantyStartTs', 'warrantyExpiryTs', 'notes', 'replacementCount', 'updatedAt'
+          ]);
+        allow delete: if isValidWorkspaceId(workspaceId) && workspaceExists(workspaceId) && isValidId(saleId);
+      }
+
+      match /replacements/{replacementId} {
+        allow get: if isValidWorkspaceId(workspaceId) && workspaceExists(workspaceId) && isValidId(replacementId);
+        allow list: if isValidWorkspaceId(workspaceId) && workspaceExists(workspaceId);
+        allow create: if isValidWorkspaceId(workspaceId)
+          && workspaceExists(workspaceId)
+          && isValidId(replacementId)
+          && isValidReplacement(incoming())
+          && incoming().id == replacementId
+          && exists(/databases/$(database)/documents/workspaces/$(workspaceId)/sales/$(incoming().originalSaleId))
+          && exists(/databases/$(database)/documents/workspaces/$(workspaceId)/clients/$(incoming().clientId));
+        allow update: if isValidWorkspaceId(workspaceId)
+          && workspaceExists(workspaceId)
+          && isValidId(replacementId)
+          && isValidReplacement(incoming())
+          && incoming().id == existing().id
+          && incoming().replacementCode == existing().replacementCode
+          && incoming().originalSaleId == existing().originalSaleId
+          && incoming().clientId == existing().clientId
+          && incoming().createdAt == existing().createdAt
+          && incoming().diff(existing()).affectedKeys().hasOnly(['notes']);
+        allow delete: if isValidWorkspaceId(workspaceId) && workspaceExists(workspaceId) && isValidId(replacementId);
+      }
+
+      match /settings/{settingId} {
+        allow get: if isValidWorkspaceId(workspaceId) && workspaceExists(workspaceId) && settingId == 'global';
+        allow list: if false;
+        allow create, update: if isValidWorkspaceId(workspaceId)
+          && workspaceExists(workspaceId)
+          && settingId == 'global'
+          && isValidSettings(incoming());
+        allow delete: if false;
+      }
+    }
+  }
+}
